@@ -19,6 +19,9 @@
   button:hover{border-color:var(--accent)}
   button.op{color:var(--accent)}
   button.eq{background:var(--accent);color:#03170b;font-weight:700;border-color:var(--accent)}
+  .voice{width:100%;background:rgba(34,197,94,.1);border:1px solid var(--line);color:var(--accent);border-radius:8px;padding:11px;font-weight:700;cursor:pointer;margin-bottom:8px}
+  .voice.listening{background:var(--accent);color:#03170b}
+  .vstatus{font-size:.8rem;color:var(--muted);min-height:20px;margin-bottom:10px;font-family:monospace}
   a{color:var(--accent);font-size:.9rem;font-weight:600}
 </style>
 </head>
@@ -26,8 +29,10 @@
 <div class="box">
   <small>C-CALCULATOR — WEB DEMO</small>
   <h1>Calculator</h1>
-  <p>Mirrors the console version. Full C source in this repo.</p>
+  <p>Mirrors the console version. Now with voice input. Full C source in this repo.</p>
   <div class="display" id="d">0</div>
+  <div class="vstatus" id="vs">Voice: press and speak, e.g. five plus three</div>
+  <button class="voice" id="vb" type="button">Voice input</button>
   <div class="keys">
     <button data-k="C">C</button><button data-k="back">Back</button><button data-k="%" class="op">%</button><button data-k="/" class="op">/</button>
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="*" class="op">*</button>
@@ -43,7 +48,7 @@
   let cur='0',prev=null,op=null,fresh=true;
   function show(v){d.textContent=v;}
   function calc(a,b,o){a=parseFloat(a);b=parseFloat(b);if(o==='+')return a+b;if(o==='-')return a-b;if(o==='*')return a*b;if(o==='/'){if(b===0)return 'Error';return a/b;}if(o==='%'){if(b===0)return 'Error';return a%b;}return b;}
-  document.querySelectorAll('button').forEach(btn=>{btn.addEventListener('click',()=>{
+  document.querySelectorAll('.keys button').forEach(btn=>{btn.addEventListener('click',()=>{
     const k=btn.getAttribute('data-k');
     if(k==='C'){cur='0';prev=null;op=null;fresh=true;show(cur);return;}
     if(k==='back'){cur=cur.length>1?cur.slice(0,-1):'0';show(cur);return;}
@@ -53,6 +58,30 @@
     if(k==='.'){if(fresh){cur='0.';fresh=false;}else if(!cur.includes('.'))cur+=k;show(cur);return;}
     if(fresh){cur=k;fresh=false;}else{cur=(cur==='0')?k:cur+k;}show(cur);
   });});
+  window.__voiceCalc=function(expr){
+    const map={};document.querySelectorAll('.keys button').forEach(b=>{map[b.getAttribute('data-k')]=b;});
+    if(map['C'])map['C'].click();
+    for(const ch of expr){
+      if(ch>='0'&&ch<='9'){map[ch].click();}
+      else if(ch==='.'){map['.'].click();}
+      else if(['+','-','*','/','%'].includes(ch)){map[ch].click();}
+    }
+    if(map['='])map['='].click();
+  };
+})();
+(function(){
+  const btn=document.getElementById('vb'),st=document.getElementById('vs');
+  if(!btn)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){if(st)st.textContent='Voice not supported here — use Chrome.';btn.disabled=true;return;}
+  const words={zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19',twenty:'20',point:'.',dot:'.'};
+  function parse(t){t=t.toLowerCase().replace(/divided by/g,'/').replace(/multiply by/g,'*').replace(/multiplied by/g,'*').replace(/plus/g,'+').replace(/add/g,'+').replace(/minus/g,'-').replace(/subtract/g,'-').replace(/times|x/g,'*').replace(/multiply/g,'*').replace(/divide/g,'/').replace(/over/g,'/').replace(/mod/g,'%').replace(/percent/g,'%').replace(/equals|equal|calculate|result/g,'=').replace(/clear/g,'C');Object.keys(words).forEach(w=>{t=t.replace(new RegExp('\\b'+w+'\\b','g'),words[w]);});t=t.replace(/[^0-9+\-*/.%()= ]/g,'');return t.replace(/\s+/g,'');}
+  const rec=new SR();rec.lang='en-US';rec.interimResults=false;rec.maxAlternatives=1;
+  rec.onstart=()=>{btn.classList.add('listening');btn.textContent='Listening...';if(st)st.textContent='Listening... speak now';};
+  rec.onend=()=>{btn.classList.remove('listening');btn.textContent='Voice input';};
+  rec.onerror=(e)=>{if(st)st.textContent='Voice error: '+e.error;};
+  rec.onresult=(e)=>{const tr=e.results[0][0].transcript;if(st)st.textContent='Heard: '+tr;const ex=parse(tr);if(!ex||!/\d/.test(ex)){if(st)st.textContent='Could not understand: '+tr;return;}if(window.__voiceCalc)window.__voiceCalc(ex);if(st)st.textContent+=' → '+ex;};
+  btn.addEventListener('click',()=>{try{rec.start();}catch(e){}});
 })();
 </script>
 </body>
