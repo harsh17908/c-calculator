@@ -36,9 +36,9 @@ Enter second number: 8
 Result: 20.00
 ```
 
-## Live demo
+## Live demo (with voice control)
 - Standalone: https://harsh17908.github.io/c-calculator/
 - In portfolio: https://harsh17908.github.io/personal-portfolio/#projects
-- `demo.html` / `index.html` — same logic in the browser
+- `demo.html` / `index.html` — same logic in the browser + voice input (Chrome: press Voice, say e.g. five plus three)
 
 Author: https://github.com/harsh17908
