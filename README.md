@@ -36,4 +36,8 @@ Enter second number: 8
 Result: 20.00
 ```
 
+## Web demo
+- `demo.html` — same logic in the browser
+- Live in portfolio: https://harsh17908.github.io/personal-portfolio/#projects
+
 Author: https://github.com/harsh17908
